@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# EC2 user_data: clone the repo, write .env, run setup.sh. Logs everything to
+# /var/log/openclaw-bootstrap.log so you can watch it over SSH.
+#
+set -euo pipefail
+exec > >(tee -a /var/log/openclaw-bootstrap.log) 2>&1
+
+echo "=== openclaw bootstrap $(date -u) ==="
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -q
+apt-get install -y git curl ca-certificates
+
+REPO_DIR=/opt/openclaw-vps
+if [ -d "$REPO_DIR/.git" ]; then
+  git -C "$REPO_DIR" fetch --all --prune
+  git -C "$REPO_DIR" checkout "${repo_ref}"
+  git -C "$REPO_DIR" pull --ff-only
+else
+  git clone --branch "${repo_ref}" "${repo_url}" "$REPO_DIR"
+fi
+
+# Secrets land in a 0600 file owned by root. setup.sh copies them to
+# /home/openclaw/.openclaw/.env, which is the env file the daemon reads.
+umask 077
+cat > "$REPO_DIR/.env" <<ENVEOF
+GEMINI_API_KEY=${gemini_api_key}
+TELEGRAM_BOT_TOKEN=${telegram_bot_token}
+TELEGRAM_USER_ID=${telegram_user_id}
+TELEGRAM_CHAT_ID=${telegram_user_id}
+TAILSCALE_AUTHKEY=${tailscale_authkey}
+TAILSCALE_HOSTNAME=${tailscale_hostname}
+OPENCLAW_MODEL=${openclaw_model}
+OPENCLAW_GATEWAY_PORT=18789
+OPENCLAW_GATEWAY_TOKEN=
+OPENCLAW_USER=openclaw
+BROWSER_ENGINE=chrome
+FORCE_SSH_HARDENING=0
+SWAP_SIZE=2G
+ENVEOF
+chmod 600 "$REPO_DIR/.env"
+
+chmod +x "$REPO_DIR"/*.sh "$REPO_DIR"/healthcheck/*.sh "$REPO_DIR"/systemd/*.sh
+
+# The EC2 key pair's public key lives on the `ubuntu` user; setup.sh copies
+# every authorized_keys it finds to the openclaw user before hardening sshd,
+# so key-only access survives.
+ASSUME_YES=1 "$REPO_DIR/setup.sh"
+
+echo "=== openclaw bootstrap finished $(date -u) ==="

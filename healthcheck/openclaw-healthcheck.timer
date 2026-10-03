@@ -1,0 +1,14 @@
+# Managed by openclaw-vps setup.sh
+[Unit]
+Description=Run the OpenClaw health check every 5 minutes
+Documentation=https://docs.openclaw.ai/gateway/health
+
+[Timer]
+# First run 2 min after boot so the Gateway has a chance to come up on its own.
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=openclaw-healthcheck.service
+
+[Install]
+WantedBy=timers.target

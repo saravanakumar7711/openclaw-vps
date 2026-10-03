@@ -1,0 +1,17 @@
+# Managed by openclaw-vps setup.sh
+# Installed as a systemd *user* unit for the openclaw account, matching
+# openclaw-gateway.service. `loginctl enable-linger openclaw` keeps it running
+# with nobody logged in.
+[Unit]
+Description=OpenClaw gateway health check and self-heal
+Documentation=https://docs.openclaw.ai/gateway/health
+After=openclaw-gateway.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/openclaw-healthcheck.sh
+# The probe + restart + 90s readiness wait must fit inside this.
+TimeoutStartSec=240
+Environment=FAIL_THRESHOLD=2
+Environment=ALERT_COOLDOWN=1800
+Nice=5

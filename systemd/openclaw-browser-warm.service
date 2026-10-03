@@ -1,0 +1,23 @@
+# Managed by openclaw-vps setup.sh
+#
+# OpenClaw's browser control service starts with the Gateway (loopback port
+# gateway.port + 2) and launches the managed Chrome on demand. There is no
+# documented "start the browser with the daemon" flag, so this one-shot unit
+# issues `openclaw browser start --headless` once the Gateway reports ready.
+#
+# browser.headless=true in openclaw.json is what guarantees headless mode for
+# every managed launch; --headless here only covers this one request.
+[Unit]
+Description=Warm the OpenClaw managed headless browser
+Documentation=https://docs.openclaw.ai/cli/browser
+After=openclaw-gateway.service
+Wants=openclaw-gateway.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=%h/bin/openclaw-browser-warm.sh
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

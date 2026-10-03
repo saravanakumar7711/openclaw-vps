@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and fill in. Contains secrets: never commit it.
+region        = "us-east-1"
+key_pair_name = "my-ec2-keypair"
+my_ip         = "203.0.113.9/32"
+name          = "openclaw"
+
+repo_url = "https://github.com/<you>/openclaw-vps.git"
+repo_ref = "main"
+
+gemini_api_key     = "AIza..."
+telegram_bot_token = "123456789:AA..."
+telegram_user_id   = "603767951"
+tailscale_authkey  = "tskey-auth-..."
+openclaw_model     = "gemini-3.8-flash"
